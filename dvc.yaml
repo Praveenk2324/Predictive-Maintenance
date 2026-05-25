@@ -1,0 +1,11 @@
+stages:
+  feature_engineering:
+    cmd: python src/features.py
+    deps:
+      - src/features.py
+      - data/raw/turbofan/train_FD001.txt
+      - data/raw/turbofan/test_FD001.txt
+      - data/raw/turbofan/RUL_FD001.txt
+    outs:
+      - data/processed/features_train.parquet
+      - data/processed/features_test.parquet

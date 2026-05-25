@@ -1,0 +1,30 @@
+schema: '2.0'
+stages:
+  feature_engineering:
+    cmd: python src/features.py
+    deps:
+    - path: data/raw/turbofan/RUL_FD001.txt
+      hash: md5
+      md5: 8f4a8b3d2692b2f7d8e72b344927bf4b
+      size: 429
+    - path: data/raw/turbofan/test_FD001.txt
+      hash: md5
+      md5: 62316d1dd70f88a9a43a1e2690765437
+      size: 2228855
+    - path: data/raw/turbofan/train_FD001.txt
+      hash: md5
+      md5: 259f340bac32ce6fa8894815600fa757
+      size: 3515356
+    - path: src/features.py
+      hash: md5
+      md5: e383bf6c6896169ca0e3675c4c7f1d76
+      size: 4577
+    outs:
+    - path: data/processed/features_test.parquet
+      hash: md5
+      md5: b869f6c63334d123a290ad78d8b6031d
+      size: 8736347
+    - path: data/processed/features_train.parquet
+      hash: md5
+      md5: 2498926779c5eabc95097a467c56d67b
+      size: 13755317
