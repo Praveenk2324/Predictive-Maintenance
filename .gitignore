@@ -1,0 +1,70 @@
+# =========================
+# Python & Environments
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.env
+
+# =========================
+# Data & Models (Managed by DVC)
+# =========================
+# Note: DVC creates its own .gitignore files when you run `dvc add`, 
+# but these rules provide a root-level safety net.
+data/raw/turbofan/*.txt
+data/processed/*.parquet
+data/raw/turbofan/*.zip
+
+# DVC ignores
+/dvc-files
+.dvc/cache
+.dvc/tmp
+# Keep dvc.yaml, dvc.lock, and .dvc/config in git!
+# Ignore the actual data tracker files if you don't want them polluting git, 
+# though usually *.dvc is tracked. We will track *.dvc as per standard practice.
+
+# =========================
+# Jupyter Notebooks
+# =========================
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
+
+# =========================
+# MLOps (MLflow, Airflow, Optuna)
+# =========================
+# MLflow local runs (if tested outside docker)
+mlruns/
+*.db
+*.sqlite
+
+# Airflow local artifacts (if testing outside WSL2/Docker)
+airflow/logs/
+airflow/airflow.db
+airflow/airflow-webserver.pid
+airflow/airflow.cfg
+airflow/webserver_config.py
+
+# =========================
+# RAG / Vector DB (Chroma)
+# =========================
+# Ignore local Chroma DB storage if tested outside Docker
+chroma_db/
+chroma_data/
+
+# =========================
+# OS & IDE (Windows / General)
+# =========================
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+*.bak
+*.swp
+.DS_Store
+
+# =========================
+# Logs
+# =========================
+*.log
