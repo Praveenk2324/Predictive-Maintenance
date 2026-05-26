@@ -9,3 +9,12 @@ stages:
     outs:
       - data/processed/features_train.parquet
       - data/processed/features_test.parquet
+
+  train_df_model:
+    cmd: python src/models/rul_regressor.py
+    deps:
+      - src/models/rul_regressor.py
+      - data/processed/features_train.parquet
+      - data/processed/features_test.parquet
+    outs:
+      - artifacts/feature_importance.png
