@@ -28,3 +28,23 @@ stages:
       hash: md5
       md5: 2498926779c5eabc95097a467c56d67b
       size: 13755317
+  train_df_model:
+    cmd: python src/models/rul_regressor.py
+    deps:
+    - path: data/processed/features_test.parquet
+      hash: md5
+      md5: b869f6c63334d123a290ad78d8b6031d
+      size: 8736347
+    - path: data/processed/features_train.parquet
+      hash: md5
+      md5: 2498926779c5eabc95097a467c56d67b
+      size: 13755317
+    - path: src/models/rul_regressor.py
+      hash: md5
+      md5: aa999c9d6eac0ff1afbcd093ee266839
+      size: 3636
+    outs:
+    - path: artifacts/feature_importance.png
+      hash: md5
+      md5: 8352e5b320a11fe15f137c6fb7a684c5
+      size: 39379

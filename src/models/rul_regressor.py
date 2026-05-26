@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import optuna
 import matplotlib.pyplot as plt
+import mlflow
 import mlflow.sklearn
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, r2_score
@@ -88,13 +89,13 @@ def main():
         plt.tight_layout()        
 
         os.makedirs("artifacts", exist_ok=True)
-        plot_path = "artifacts/features_importance.png"
+        plot_path = "artifacts/feature_importance.png"
         plt.savefig(plot_path)
         mlflow.log_artifact(plot_path)
 
-        mlflow.sklearn.log_model(rf_final, "ruf_rf_model")
+        mlflow.sklearn.log_model(rf_final, "rul_rf_model")
 
-        print(f"Run complete! Metrics logged ton MLflow:")
+        print(f"Run complete! Metrics logged to MLflow:")
         print(f"-> RMSE: {rmse:.4f}")
         print(f"-> R2:   {r2:.4f}")
 
