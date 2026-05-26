@@ -3,7 +3,7 @@ import chromadb
 from chromadb.utils import embedding_functions
 import os
 
-LOGS_PATH = "data/raw/maintenance_log.csv"
+LOGS_PATH = "data/raw/maintenance_logs.csv"
 CHROMA_DB_DIR = "chroma_db"
 COLLECTION_NAME = "maintenance_knowledge_base"
 
@@ -15,7 +15,7 @@ def main():
 
     client = chromadb.PersistentClient(path=CHROMA_DB_DIR)
 
-    sentenence_transformer_ef = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
+    sentence_transformer_ef = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
 
     try:
         client.delete_collection(name=COLLECTION_NAME)
@@ -27,7 +27,7 @@ def main():
     print("Creating new vector collection and downloading embedding model...")
     collection = client.create_collection(
         name=COLLECTION_NAME,
-        embedding_function=sentenence_transformer_ef
+        embedding_function=sentence_transformer_ef
     )
 
     print("Embedding and storing documents (This might take a minute)...")
@@ -43,3 +43,6 @@ def main():
     )
 
     print(f"Successfully ingested {collection.count()} logs into ChromaDB at ./{CHROMA_DB_DIR}")
+
+if __name__ == "__main__":
+    main()
