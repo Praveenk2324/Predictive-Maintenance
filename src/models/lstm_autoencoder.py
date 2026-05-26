@@ -12,7 +12,7 @@ from sklearn.preprocessing import StandardScaler
 
 TRAIN_PATH = 'data/processed/features_train.parquet'
 MLFLOW_URI = 'http://127.0.0.1:5000'
-USEFUL_SENSORS = ['s2', 's2', 's4', 's7', 's8', 's9', 's11', 's12', 's13', 's14', 's15', 's17', 's20', 's21']
+USEFUL_SENSORS = ['s2', 's3', 's4', 's7', 's8', 's9', 's11', 's12', 's13', 's14', 's15', 's17', 's20', 's21']
 SEQ_LEN = 30
 BATCH_SIZE = 64
 EPOCHS = 20
