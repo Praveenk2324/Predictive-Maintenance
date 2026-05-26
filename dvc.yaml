@@ -18,3 +18,12 @@ stages:
       - data/processed/features_test.parquet
     outs:
       - artifacts/feature_importance.png
+
+  train_lstm_model:
+    cmd: python src/models/lstm_autoencoder.py
+    deps:
+      - src/models/lstm_autoencoder.py
+      - data/processed/features_train.parquet
+    outs:
+      - artifacts/reconstruction_error_dist.png
+      - artifacts/sensor_scaler.pkl
