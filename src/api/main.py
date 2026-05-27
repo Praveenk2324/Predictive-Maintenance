@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from contextlib import asynccontextmanager
@@ -57,6 +58,15 @@ async def lifespan(app: FastAPI):
     ml_models.clear()
 
 app = FastAPI(title="Aerospace Predictive Maintenance API", version="1.0", lifespan=lifespan)
+
+# --- CORS Middleware ---
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class EnginePayload(BaseModel):
     engine_id: int

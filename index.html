@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aerospace Predictive Maintenance Dashboard</title>
+<meta name="description" content="Fleet-level engine health monitoring for aerospace predictive maintenance using AI-driven diagnostics.">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:#0d1117;--bg2:#161b22;--bg3:#1c2333;--border:#30363d;
+--amber:#f5a623;--amber-dim:#c4841d;--green:#00d084;--red:#ff3b3b;--red-dim:#cc2f2f;
+--text:#e6edf3;--text-dim:#8b949e;--blue:#58a6ff;
+}
+body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;
+background-image:
+  linear-gradient(rgba(245,166,35,.03) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(245,166,35,.03) 1px,transparent 1px);
+background-size:40px 40px;
+}
+header{background:linear-gradient(135deg,#0d1117 0%,#1a1f2e 100%);border-bottom:1px solid var(--amber);padding:16px 32px;display:flex;align-items:center;gap:16px;position:relative;overflow:hidden}
+header::after{content:'';position:absolute;bottom:0;left:0;width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--amber),transparent)}
+header h1{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.6rem;color:var(--amber);letter-spacing:1px}
+header .sub{font-size:.75rem;color:var(--text-dim);margin-left:8px;border-left:1px solid var(--border);padding-left:12px}
+.layout{display:flex;min-height:calc(100vh - 65px)}
+.sidebar{width:300px;min-width:300px;background:var(--bg2);border-right:1px solid var(--border);padding:24px;display:flex;flex-direction:column;gap:20px}
+.sidebar h2{font-family:'Rajdhani',sans-serif;font-size:1.1rem;color:var(--amber);text-transform:uppercase;letter-spacing:2px;border-bottom:1px solid var(--border);padding-bottom:8px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group label{font-size:.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px}
+.form-group select,.form-group input[type=range]{width:100%;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:8px 10px;font-family:inherit;font-size:.85rem;outline:none;transition:border-color .2s}
+.form-group select:focus{border-color:var(--amber)}
+.form-group select{cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238b949e' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+input[type=range]{-webkit-appearance:none;height:6px;background:var(--bg);border:none;border-radius:3px;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;background:var(--amber);border-radius:50%;cursor:pointer;box-shadow:0 0 8px rgba(245,166,35,.4)}
+input[type=range]::-moz-range-thumb{width:18px;height:18px;background:var(--amber);border-radius:50%;cursor:pointer;border:none}
+.cycle-val{font-family:'Share Tech Mono',monospace;font-size:1.8rem;color:var(--amber);text-align:center}
+.cycle-note{font-size:.65rem;color:var(--text-dim);font-style:italic;margin-top:2px}
+.btn-run{width:100%;padding:14px;font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;border:1px solid var(--amber);background:linear-gradient(135deg,rgba(245,166,35,.15),rgba(245,166,35,.05));color:var(--amber);border-radius:4px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
+.btn-run:hover{background:linear-gradient(135deg,rgba(245,166,35,.3),rgba(245,166,35,.1));box-shadow:0 0 20px rgba(245,166,35,.2)}
+.btn-run:active{transform:scale(.98)}
+.btn-run:disabled{opacity:.5;cursor:not-allowed}
+.btn-run .spinner{display:none;width:16px;height:16px;border:2px solid transparent;border-top-color:var(--amber);border-radius:50%;animation:spin .6s linear infinite;margin-right:8px;vertical-align:middle}
+.btn-run.loading .spinner{display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.main{flex:1;padding:28px 32px;overflow-y:auto}
+.results-hidden{display:none}
+.status-badge{font-family:'Rajdhani',sans-serif;font-size:1.4rem;font-weight:700;padding:14px 24px;border-radius:6px;text-align:center;margin-bottom:20px;letter-spacing:1px}
+.status-healthy{background:rgba(0,208,132,.1);border:1px solid var(--green);color:var(--green)}
+.status-critical{background:rgba(255,59,59,.1);border:1px solid var(--red);color:var(--red);animation:pulse-red 2s ease-in-out infinite}
+@keyframes pulse-red{0%,100%{box-shadow:0 0 5px rgba(255,59,59,.2)}50%{box-shadow:0 0 25px rgba(255,59,59,.4)}}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.metric-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:20px;transition:border-color .2s}
+.metric-card:hover{border-color:var(--amber)}
+.metric-card .label{font-size:.7rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.metric-card .value{font-family:'Share Tech Mono',monospace;font-size:2rem;font-weight:600}
+.metric-card .unit{font-size:.75rem;color:var(--text-dim);margin-left:4px}
+.metric-card .sub-info{font-size:.7rem;color:var(--text-dim);margin-top:8px;display:flex;align-items:center;gap:4px}
+.gauge-container{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:20px;margin-bottom:20px}
+.gauge-container .label{font-size:.7rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+.gauge-bar{position:relative;height:28px;background:var(--bg);border-radius:4px;overflow:visible}
+.gauge-fill{height:100%;border-radius:4px;transition:width .8s ease,background .4s;min-width:2px}
+.gauge-threshold{position:absolute;top:-4px;height:36px;width:2px;border-left:2px dashed var(--amber);z-index:2}
+.gauge-threshold-label{position:absolute;top:-20px;transform:translateX(-50%);font-size:.6rem;color:var(--amber);white-space:nowrap}
+.gauge-value-label{position:absolute;top:50%;right:8px;transform:translateY(-50%);font-size:.7rem;color:var(--text);font-weight:600;z-index:3}
+.rec-box{border-radius:6px;padding:16px 20px;margin-bottom:24px;font-size:.85rem;line-height:1.6;display:flex;gap:12px;align-items:flex-start}
+.rec-box .icon{font-size:1.4rem;flex-shrink:0;margin-top:2px}
+.rec-warning{background:rgba(245,166,35,.08);border:1px solid var(--amber);color:#f0d090}
+.rec-info{background:rgba(88,166,255,.08);border:1px solid var(--blue);color:#a0c8ff}
+.divider{border:none;border-top:1px solid var(--border);margin:28px 0}
+.history-section h2{font-family:'Rajdhani',sans-serif;font-size:1.2rem;color:var(--text);margin-bottom:16px}
+.btn-fetch{padding:10px 20px;font-family:'Rajdhani',sans-serif;font-size:.9rem;font-weight:600;background:var(--bg3);color:var(--text-dim);border:1px solid var(--border);border-radius:4px;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:1px}
+.btn-fetch:hover{border-color:var(--amber);color:var(--amber)}
+.btn-fetch:disabled{opacity:.5;cursor:not-allowed}
+table{width:100%;border-collapse:collapse;margin-top:16px;font-size:.78rem}
+thead th{background:var(--bg3);color:var(--amber);font-family:'Rajdhani',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:1px;padding:10px 12px;text-align:left;border-bottom:1px solid var(--amber);font-size:.7rem}
+tbody td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text-dim);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tbody tr:hover{background:rgba(245,166,35,.04)}
+.cell-healthy{color:var(--green);font-weight:600}
+.cell-critical{color:var(--red);font-weight:600}
+.error-banner{background:rgba(255,59,59,.1);border:1px solid var(--red);color:#ffa0a0;padding:14px 20px;border-radius:6px;font-size:.85rem;margin-top:12px}
+.info-banner{background:rgba(88,166,255,.08);border:1px solid var(--blue);color:#a0c8ff;padding:14px 20px;border-radius:6px;font-size:.85rem;margin-top:12px}
+.fade-in{animation:fadeIn .5s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.sidebar-footer{margin-top:auto;padding-top:16px;border-top:1px solid var(--border);font-size:.6rem;color:var(--text-dim);text-align:center;line-height:1.6}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>✈️ AEROSPACE PREDICTIVE MAINTENANCE</h1>
+  <span class="sub">Fleet Engine Health Monitoring System &bull; NASA CMAPSS FD001</span>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <h2>⚙ Fleet Control</h2>
+    <p style="font-size:.75rem;color:var(--text-dim);line-height:1.5">Select an engine and flight cycle to simulate streaming telemetry diagnostics.</p>
+
+    <div class="form-group">
+      <label for="engineSelect">Engine Unit ID</label>
+      <select id="engineSelect"></select>
+    </div>
+
+    <div class="form-group">
+      <label for="cycleSlider">Current Flight Cycle (Time Travel)</label>
+      <div class="cycle-val" id="cycleDisplay">190</div>
+      <input type="range" id="cycleSlider" min="30" max="350" value="190" step="1">
+      <span class="cycle-note">Min 30 — LSTM sequence requirement</span>
+    </div>
+
+    <button class="btn-run" id="btnRun" onclick="runDiagnostics()">
+      <span class="spinner"></span>
+      <span id="btnLabel">🔍 Run Diagnostics at Cycle 190</span>
+    </button>
+
+    <div class="sidebar-footer">
+      SYSTEM v1.0 &bull; AI-POWERED<br>
+      RF + LSTM Autoencoder + RAG
+    </div>
+  </aside>
+
+  <main class="main">
+    <div id="placeholder" style="display:flex;align-items:center;justify-content:center;height:300px;color:var(--text-dim);font-size:.9rem;text-align:center;flex-direction:column;gap:8px">
+      <span style="font-size:3rem">🛩️</span>
+      <span>Select an engine and run diagnostics to begin analysis.</span>
+    </div>
+
+    <div id="resultsPanel" class="results-hidden">
+      <div id="statusBadge" class="status-badge"></div>
+      <div class="metrics">
+        <div class="metric-card">
+          <div class="label">Remaining Useful Life</div>
+          <div><span class="value" id="rulValue">—</span><span class="unit">cycles</span></div>
+        </div>
+        <div class="metric-card">
+          <div class="label">Anomaly Score (MSE)</div>
+          <div><span class="value" id="mseValue">—</span></div>
+          <div class="sub-info" id="thresholdInfo">⚠ Threshold: —</div>
+        </div>
+      </div>
+      <div class="gauge-container">
+        <div class="label">Anomaly Detection Gauge</div>
+        <div class="gauge-bar" id="gaugeBar">
+          <div class="gauge-fill" id="gaugeFill"></div>
+          <div class="gauge-threshold" id="gaugeThreshold"><span class="gauge-threshold-label">THRESHOLD</span></div>
+        </div>
+      </div>
+      <div id="recBox" class="rec-box rec-info">
+        <span class="icon">📝</span>
+        <span id="recText">—</span>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <section class="history-section">
+      <h2>🗄️ PostgreSQL Maintenance Logs</h2>
+      <button class="btn-fetch" id="btnFetch" onclick="fetchHistory()">Fetch Historical Logs</button>
+      <div id="historyArea"></div>
+    </section>
+  </main>
+</div>
+
+<script>
+const API_BASE = "http://13.60.174.48:8000";
+
+// --- Populate engine dropdown ---
+(function(){
+  const sel = document.getElementById('engineSelect');
+  for(let i=1;i<=100;i++){
+    const o = document.createElement('option');
+    o.value=i; o.textContent='Engine '+i;
+    sel.appendChild(o);
+  }
+})();
+
+// --- Cycle slider live update ---
+const slider = document.getElementById('cycleSlider');
+const cycleDisp = document.getElementById('cycleDisplay');
+const btnLabel = document.getElementById('btnLabel');
+slider.addEventListener('input', function(){
+  cycleDisp.textContent = this.value;
+  btnLabel.textContent = '🔍 Run Diagnostics at Cycle ' + this.value;
+});
+
+// --- Seeded RNG & payload builder ---
+function seededRandom(seed){
+  let s=seed;
+  return function(){s=(s*1664525+1013904223)&0xffffffff;return(s>>>0)/0xffffffff;};
+}
+
+function buildPayload(engineId, cycle){
+  const rand=seededRandom(engineId*1000+cycle);
+  const baselines=[641.82,1589.70,1400.60,554.36,2388.02,9065.14,47.47,521.66,2388.02,8138.62,8.4195,0.03,392.00,23.4190];
+  const ns=0.02, deg=Math.min(cycle/300,1.0), ab=deg>0.85?(deg-0.85)*5:0;
+  const lstm_sequence=[];
+  for(let t=0;t<30;t++){
+    const row=baselines.map((b)=>{
+      const n=(rand()-0.5)*2*ns*b, d=b*deg*0.05*rand(), a=b*ab*rand()*0.3;
+      return parseFloat((b+n+d+a).toFixed(4));
+    });
+    lstm_sequence.push(row);
+  }
+  const rf_features=[];
+  for(let t=0;t<10;t++){
+    baselines.forEach((b)=>{
+      const n=(rand()-0.5)*2*ns*b, d=b*deg*0.05*rand();
+      rf_features.push(parseFloat((b+n+d).toFixed(4)));
+    });
+  }
+  return{engine_id:engineId,rf_features,lstm_sequence};
+}
+
+// --- Run Diagnostics ---
+async function runDiagnostics(){
+  const btn=document.getElementById('btnRun');
+  const engineId=parseInt(document.getElementById('engineSelect').value);
+  const cycle=parseInt(slider.value);
+  btn.classList.add('loading'); btn.disabled=true;
+  btnLabel.textContent='Transmitting telemetry...';
+
+  try{
+    const payload=buildPayload(engineId,cycle);
+    const res=await fetch(API_BASE+'/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(!res.ok) throw new Error('API returned '+res.status+': '+(await res.text()));
+    const data=await res.json();
+    displayResults(data,cycle);
+  }catch(e){
+    showError('resultsPanel',e.message);
+    document.getElementById('resultsPanel').classList.remove('results-hidden');
+    document.getElementById('placeholder').style.display='none';
+  }finally{
+    btn.classList.remove('loading'); btn.disabled=false;
+    btnLabel.textContent='🔍 Run Diagnostics at Cycle '+cycle;
+  }
+}
+
+function displayResults(d,cycle){
+  document.getElementById('placeholder').style.display='none';
+  const panel=document.getElementById('resultsPanel');
+  panel.classList.remove('results-hidden');
+  panel.classList.remove('fade-in');
+  void panel.offsetWidth;
+  panel.classList.add('fade-in');
+
+  const badge=document.getElementById('statusBadge');
+  const isCritical=d.status.includes('CRITICAL');
+  badge.textContent=d.status;
+  badge.className='status-badge '+(isCritical?'status-critical':'status-healthy');
+
+  document.getElementById('rulValue').textContent=d.predicted_rul_cycles;
+  document.getElementById('mseValue').textContent=d.anomaly_mse;
+  document.getElementById('thresholdInfo').innerHTML='⚠ Threshold: '+d.anomaly_threshold;
+
+  // Gauge
+  const maxGauge=Math.max(d.anomaly_mse, d.anomaly_threshold)*1.5;
+  const fillPct=Math.min((d.anomaly_mse/maxGauge)*100,100);
+  const threshPct=(d.anomaly_threshold/maxGauge)*100;
+  const fill=document.getElementById('gaugeFill');
+  fill.style.width=fillPct+'%';
+  fill.style.background=isCritical?'linear-gradient(90deg,var(--red-dim),var(--red))':'linear-gradient(90deg,#006644,var(--green))';
+  const th=document.getElementById('gaugeThreshold');
+  th.style.left=threshPct+'%';
+
+  // Recommendation
+  const rec=document.getElementById('recBox');
+  const recText=document.getElementById('recText');
+  if(isCritical){
+    rec.className='rec-box rec-warning';
+    rec.querySelector('.icon').textContent='🔧';
+    recText.textContent=d.maintenance_recommendation;
+  }else{
+    rec.className='rec-box rec-info';
+    rec.querySelector('.icon').textContent='📝';
+    recText.textContent=d.maintenance_recommendation||'System operating within normal parameters.';
+  }
+}
+
+// --- Fetch History ---
+async function fetchHistory(){
+  const btn=document.getElementById('btnFetch');
+  const area=document.getElementById('historyArea');
+  const engineId=document.getElementById('engineSelect').value;
+  btn.disabled=true; btn.textContent='Querying...';
+  area.innerHTML='';
+
+  try{
+    const res=await fetch(API_BASE+'/history/'+engineId);
+    if(res.status===404){
+      area.innerHTML='<div class="info-banner">No logs found for Engine '+engineId+'. Run diagnostics first to generate logs.</div>';
+      return;
+    }
+    if(!res.ok) throw new Error('API returned '+res.status);
+    const data=await res.json();
+    if(!data.length){area.innerHTML='<div class="info-banner">No logs found for Engine '+engineId+'.</div>';return;}
+
+    let html='<table><thead><tr><th>ID</th><th>Timestamp</th><th>Status</th><th>RUL (Cycles)</th><th>MSE</th><th>Recommendation</th></tr></thead><tbody>';
+    data.forEach(r=>{
+      const cls=r.status.includes('CRITICAL')?'cell-critical':'cell-healthy';
+      const ts=r.timestamp?new Date(r.timestamp).toLocaleString():'—';
+      html+='<tr><td>'+r.prediction_id+'</td><td>'+ts+'</td><td class="'+cls+'">'+r.status+'</td><td>'+r.predicted_rul_cycles+'</td><td>'+r.anomaly_mse+'</td><td title="'+(r.maintenance_recommendation||'').replace(/"/g,'&quot;')+'">'+(r.maintenance_recommendation||'—')+'</td></tr>';
+    });
+    html+='</tbody></table>';
+    area.innerHTML='<div class="fade-in">'+html+'</div>';
+  }catch(e){
+    showError('historyArea',e.message);
+  }finally{
+    btn.disabled=false; btn.textContent='Fetch Historical Logs';
+  }
+}
+
+function showError(targetId, msg){
+  document.getElementById(targetId).innerHTML='<div class="error-banner">⛔ Connection Error: '+msg+'<br><small style="opacity:.7">Ensure FastAPI is running on port 8000 and CORS is enabled.</small></div>';
+}
+</script>
+</body>
+</html>
