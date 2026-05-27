@@ -137,7 +137,11 @@ def main():
 
     mlflow.log_artifact(plot_path)
     mlflow.log_artifact(scaler_path)
-    mlflow.pytorch.log_model(model, "lstm_autoencoder_model")
+    mlflow.pytorch.log_model(
+            model, 
+            "lstm_autoencoder_model",
+            registered_model_name="NASA_LSTM_Autoencoder"
+        )
         
     print("Training complete! Model and artifacts logged to MLflow.")
 

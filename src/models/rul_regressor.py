@@ -93,7 +93,11 @@ def main():
         plt.savefig(plot_path)
         mlflow.log_artifact(plot_path)
 
-        mlflow.sklearn.log_model(rf_final, "rul_rf_model")
+        mlflow.sklearn.log_model(
+            rf_final, 
+            "rul_rf_model",
+            registered_model_name="NASA_RandomForest_RUL"
+        )
 
         print(f"Run complete! Metrics logged to MLflow:")
         print(f"-> RMSE: {rmse:.4f}")
