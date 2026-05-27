@@ -8,9 +8,12 @@ services:
       - "8000:8000"
     depends_on:
       - postgres
+      - mlflow
+    volumes:
+      # This allows the API to read the vector DB we will build on the server
+      - ./chroma_db:/app/chroma_db
     environment:
-      # This tells the API to look for the database container!
-      - DB_HOST=postgres 
+      - DB_HOST=postgres
     restart: unless-stopped
 
   postgres:
@@ -24,6 +27,20 @@ services:
       - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  mlflow:
+    image: python:3.10-slim
+    container_name: pm_mlflow
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlruns:/app/mlruns
+      - ./mlflow.db:/app/mlflow.db
+    working_dir: /app
+    command: >
+      bash -c "pip install mlflow && 
+      mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlruns --host 0.0.0.0 --port 5000"
     restart: unless-stopped
 
 volumes:
