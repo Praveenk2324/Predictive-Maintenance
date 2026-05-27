@@ -5,7 +5,7 @@ from .database import Base
 class PredictionLog(Base):
     __tablename__ = "predictions"
 
-    id = Column(Integer, primary_key=True, Index=True)
+    id = Column(Integer, primary_key=True, index=True)
     engine_id = Column(Integer, index=True)
     timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
