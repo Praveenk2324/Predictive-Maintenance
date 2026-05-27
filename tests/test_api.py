@@ -8,7 +8,7 @@ def test_prediction_api():
     df = pd.read_parquet("data/processed/features_train.parquet")
     
     # Grab Engine 1
-    engine_id = 2
+    engine_id = 5
     engine_data = df[df['engine_id'] == engine_id].sort_values('cycle')
     
     # The exact 14 sensors our models were trained on

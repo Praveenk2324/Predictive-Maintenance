@@ -90,6 +90,10 @@ def predict_engine_status(payload: EnginePayload, db: Session = Depends(get_db))
 
             if results['documents'] and results['documents'][0]:
                 rag_context = results['documents'][0][0]
+            else:
+                rag_context = "Anomaly detected, but no matching historical logs found."
+        else:
+            rag_context = "System operating within normal parameters. Continue standard monitoring."
         
         new_log = models.PredictionLog(
             engine_id=payload.engine_id,
@@ -103,13 +107,14 @@ def predict_engine_status(payload: EnginePayload, db: Session = Depends(get_db))
         db.commit()
         db.refresh(new_log)\
         
+        #  Log to PostgreSQL
         return {
             "prediction_id": new_log.id,
             "engine_id": payload.engine_id,
             "status": "🚨 CRITICAL FAULT" if is_anomaly == "ANOMALY" else "✅ HEALTHY",
             "predicted_rul_cycles": round(predicted_rul, 2),
             "anomaly_mse": round(mse, 4),
-            "maintenance_recommendation": rag_context if rag_context else "Continue standard monitoring."
+            "maintenance_recommendation": rag_context
         }
     
     except Exception as e:
@@ -134,6 +139,7 @@ def get_engine_history(engine_id: int, db: Session = Depends(get_db)):
             "status": "🚨 CRITICAL FAULT" if r.is_anomaly == "ANOMALY" else "✅ HEALTHY",
             "predicted_rul_cycles": round(r.predicted_rul, 2),
             "anomaly_mse": round(r.reconstruction_mse, 4),
+            "anomaly_threshold": round(ANOMALY_THRESHOLD, 4),
             "maintenance_recommendation": r.rag_diagnostics
         })
         
