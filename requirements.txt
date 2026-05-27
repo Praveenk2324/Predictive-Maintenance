@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+mlflow
+torch
+scikit-learn
+pandas
+chromadb
+sentence-transformers
+joblib
+numpy

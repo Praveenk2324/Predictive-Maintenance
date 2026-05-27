@@ -1,6 +1,18 @@
 version: '3.8'
 
 services:
+  api:
+    build: .
+    container_name: pm_api
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    environment:
+      # This tells the API to look for the database container!
+      - DB_HOST=postgres 
+    restart: unless-stopped
+
   postgres:
     image: postgres:15
     container_name: pm_postgres
