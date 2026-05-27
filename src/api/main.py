@@ -105,7 +105,7 @@ def predict_engine_status(payload: EnginePayload, db: Session = Depends(get_db))
 
         db.add(new_log)
         db.commit()
-        db.refresh(new_log)\
+        db.refresh(new_log)
         
         #  Log to PostgreSQL
         return {
@@ -114,6 +114,7 @@ def predict_engine_status(payload: EnginePayload, db: Session = Depends(get_db))
             "status": "🚨 CRITICAL FAULT" if is_anomaly == "ANOMALY" else "✅ HEALTHY",
             "predicted_rul_cycles": round(predicted_rul, 2),
             "anomaly_mse": round(mse, 4),
+            "anomaly_threshold": round(ANOMALY_THRESHOLD, 4),
             "maintenance_recommendation": rag_context
         }
     
