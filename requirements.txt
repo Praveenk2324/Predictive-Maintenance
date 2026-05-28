@@ -6,7 +6,7 @@ sqlalchemy
 psycopg2-binary
 mlflow
 torch
-scikit-learn
+scikit-learn==1.8.0
 pandas
 chromadb
 sentence-transformers
