@@ -15,9 +15,11 @@ from src.api import models
 
 # --- Global Model Variables ---
 ml_models = {}
-MLFLOW_URI = "http://127.0.0.1:5000"
+MLFLOW_URI = "http://mlflow:5000"
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 ANOMALY_THRESHOLD = 0.253008
+
+models.Base.metadata.create_all(bind=engine)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -37,7 +39,7 @@ async def lifespan(app: FastAPI):
     scaler_path = client.download_artifacts(prod_lstm_version.run_id, 'sensor_scaler.pkl')
     ml_models['scaler'] = joblib.load(scaler_path)
 
-    lstm_model = mlflow.pytorch.load_model(f"models:/{lstm_name}@{alias}")
+    lstm_model = mlflow.pytorch.load_model(f"models:/{lstm_name}@{alias}", map_location='cpu')
     lstm_model.to(DEVICE)
     lstm_model.eval()
     ml_models['lstm'] = lstm_model
@@ -105,7 +107,7 @@ def predict_engine_status(payload: EnginePayload, db: Session = Depends(get_db))
 
         db.add(new_log)
         db.commit()
-        db.refresh(new_log)\
+        db.refresh(new_log)
         
         #  Log to PostgreSQL
         return {

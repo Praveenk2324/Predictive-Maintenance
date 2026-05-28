@@ -1,6 +1,8 @@
 services:
   api:
-    build: .
+    build: 
+      context: .
+      dockerfile: Dockerfile
     container_name: pm_api
     ports:
       - "8000:8000"
@@ -11,6 +13,17 @@ services:
       - ./chroma_db:/app/chroma_db
     environment:
       - DB_HOST=postgres
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: pm_frontend
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api
     restart: unless-stopped
 
   postgres:

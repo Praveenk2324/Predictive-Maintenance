@@ -1,0 +1,19 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update -o Acquire::ForceIPv4=true && \
+    apt-get install -y -o Acquire::ForceIPv4=true curl && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install frontend requirements (Streamlit and Pandas)
+COPY requirements.txt .
+RUN pip install --no-cache-dir streamlit pandas requests
+
+COPY . .
+
+EXPOSE 8501
+
+# Run the Streamlit app
+CMD ["streamlit", "run", "streamlit_app.py", "--server.port=8501", "--server.address=0.0.0.0"]

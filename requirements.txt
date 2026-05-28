@@ -1,0 +1,15 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+mlflow
+torch
+scikit-learn==1.8.0
+pandas
+chromadb
+sentence-transformers
+joblib
+numpy
+optuna
