@@ -37,6 +37,8 @@ services:
     volumes:
       - ./mlruns:/app/mlruns
       - ./mlflow.db:/app/mlflow.db
+      - ./mlartifacts:/app/mlartifacts  # <-- ADD THIS LINE
+      - ./artifacts:/app/artifacts
     working_dir: /app
     command: >
       bash -c "pip install mlflow && 
