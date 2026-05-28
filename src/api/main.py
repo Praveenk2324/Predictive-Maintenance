@@ -149,6 +149,7 @@ def get_engine_history(engine_id: int, db: Session = Depends(get_db)):
     for r in records:
         formatted_history.append({
             "prediction_id": r.id,
+            "engine_id": r.engine_id,
             "timestamp": r.timestamp,
             "status": "🚨 CRITICAL FAULT" if r.is_anomaly == "ANOMALY" else "✅ HEALTHY",
             "predicted_rul_cycles": round(r.predicted_rul, 2),

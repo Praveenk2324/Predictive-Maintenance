@@ -103,9 +103,9 @@ tbody tr:hover{background:rgba(245,166,35,.04)}
     </div>
 
     <div class="form-group">
-      <label for="cycleSlider">Current Flight Cycle (Time Travel)</label>
+      <label for="cycleSlider">Current Flight Cycle</label>
       <div class="cycle-val" id="cycleDisplay">190</div>
-      <input type="range" id="cycleSlider" min="30" max="350" value="190" step="1">
+      <input type="range" id="cycleSlider" min="30" max="200" value="190" step="1">
       <span class="cycle-note">Min 30 — LSTM sequence requirement</span>
     </div>
 
@@ -245,20 +245,22 @@ function displayResults(d, cycle) {
   panel.classList.add('fade-in');
 
   // --- MAPPED TO PYTHON API KEYS ---
-  const statusText = d.is_anomaly || 'NORMAL';
-  const isCritical = statusText.includes('ANOMALY') || statusText.includes('CRITICAL');
+  const statusText = d.status || 'NORMAL';
+  const isCritical = statusText.includes('CRITICAL');
   
   const badge=document.getElementById('statusBadge');
   badge.textContent = statusText;
   badge.className = 'status-badge ' + (isCritical ? 'status-critical' : 'status-healthy');
 
-  document.getElementById('rulValue').textContent = d.predicted_rul ? d.predicted_rul.toFixed(1) : '—';
-  document.getElementById('mseValue').textContent = d.reconstruction_mse ? d.reconstruction_mse.toFixed(0) : '—';
-  document.getElementById('thresholdInfo').innerHTML = '⚠ Threshold: Auto-calculated';
+  document.getElementById('rulValue').textContent = d.predicted_rul_cycles !== undefined ? d.predicted_rul_cycles.toFixed(1) : '—';
+  document.getElementById('mseValue').textContent = d.anomaly_mse !== undefined ? d.anomaly_mse.toFixed(4) : '—';
+  
+  const threshValue = d.anomaly_threshold || 0.2530;
+  document.getElementById('thresholdInfo').innerHTML = '⚠ Threshold: ' + threshValue.toFixed(4);
 
   // Gauge Logic
-  const mse = d.reconstruction_mse || 0;
-  const thresh = 150000; // Static visual threshold
+  const mse = d.anomaly_mse || 0;
+  const thresh = threshValue; // Dynamic visual threshold
   const maxGauge = Math.max(mse, thresh) * 1.5;
   const fillPct = Math.min((mse / maxGauge) * 100, 100);
   const threshPct = (thresh / maxGauge) * 100;
@@ -276,49 +278,11 @@ function displayResults(d, cycle) {
   if(isCritical){
     rec.className='rec-box rec-warning';
     rec.querySelector('.icon').textContent='🔧';
-    recText.textContent = d.rag_diagnostics || 'Anomaly detected. Inspect engine.';
+    recText.textContent = d.maintenance_recommendation || 'Anomaly detected. Inspect engine.';
   } else {
     rec.className='rec-box rec-info';
     rec.querySelector('.icon').textContent='📝';
-    recText.textContent = d.rag_diagnostics || 'System operating within normal parameters.';
-  }
-}
-
-async function fetchHistory(){
-  const btn=document.getElementById('btnFetch');
-  const area=document.getElementById('historyArea');
-  const engineId=document.getElementById('engineSelect').value;
-  btn.disabled=true; btn.textContent='Querying...';
-  area.innerHTML='';
-
-  try{
-    const res=await fetch(API_BASE+'/history/'+engineId);
-    if(res.status===404){
-      area.innerHTML='<div class="info-banner">No logs found for Engine '+engineId+'. Run diagnostics first to generate logs.</div>';
-      return;
-    }
-    if(!res.ok) throw new Error('API returned '+res.status);
-    const data=await res.json();
-    if(!data.length){area.innerHTML='<div class="info-banner">No logs found for Engine '+engineId+'.</div>';return;}
-
-    let html='<table><thead><tr><th>ID</th><th>Timestamp</th><th>Status</th><th>RUL</th><th>MSE</th><th>Recommendation</th></tr></thead><tbody>';
-    data.forEach(r=>{
-      // --- MAPPED TO PYTHON API KEYS ---
-      const statusText = r.is_anomaly || 'NORMAL';
-      const cls = statusText.includes('ANOMALY') || statusText.includes('CRITICAL') ? 'cell-critical' : 'cell-healthy';
-      const ts = r.timestamp ? new Date(r.timestamp).toLocaleString() : '—';
-      const rul = r.predicted_rul ? parseFloat(r.predicted_rul).toFixed(1) : '—';
-      const mse = r.reconstruction_mse ? parseFloat(r.reconstruction_mse).toFixed(0) : '—';
-      const rec = r.rag_diagnostics || '—';
-      
-      html+='<tr><td>'+(r.id || r.prediction_id || '—')+'</td><td>'+ts+'</td><td class="'+cls+'">'+statusText+'</td><td>'+rul+'</td><td>'+mse+'</td><td title="'+rec.replace(/"/g,'&quot;')+'">'+rec+'</td></tr>';
-    });
-    html+='</tbody></table>';
-    area.innerHTML='<div class="fade-in">'+html+'</div>';
-  }catch(e){
-    showError('historyArea',e.message);
-  }finally{
-    btn.disabled=false; btn.textContent='Fetch Historical Logs';
+    recText.textContent = d.maintenance_recommendation || 'System operating within normal parameters.';
   }
 }
 
@@ -340,11 +304,11 @@ async function fetchHistory(){
     const data=await res.json();
     if(!data.length){area.innerHTML='<div class="info-banner">No logs found for Engine '+engineId+'.</div>';return;}
 
-    let html='<table><thead><tr><th>ID</th><th>Timestamp</th><th>Status</th><th>RUL (Cycles)</th><th>MSE</th><th>Recommendation</th></tr></thead><tbody>';
+    let html='<table><thead><tr><th>Prediction ID</th><th>Engine ID</th><th>Timestamp</th><th>Status</th><th>RUL (Cycles)</th><th>MSE</th><th>Recommendation</th></tr></thead><tbody>';
     data.forEach(r=>{
-      const cls=r.status.includes('CRITICAL')?'cell-critical':'cell-healthy';
+      const cls=(r.status && r.status.includes('CRITICAL'))?'cell-critical':'cell-healthy';
       const ts=r.timestamp?new Date(r.timestamp).toLocaleString():'—';
-      html+='<tr><td>'+r.prediction_id+'</td><td>'+ts+'</td><td class="'+cls+'">'+r.status+'</td><td>'+r.predicted_rul_cycles+'</td><td>'+r.anomaly_mse+'</td><td title="'+(r.maintenance_recommendation||'').replace(/"/g,'&quot;')+'">'+(r.maintenance_recommendation||'—')+'</td></tr>';
+      html+='<tr><td>'+r.prediction_id+'</td><td>'+r.engine_id+'</td><td>'+ts+'</td><td class="'+cls+'">'+(r.status||'NORMAL')+'</td><td>'+(r.predicted_rul_cycles !== undefined ? r.predicted_rul_cycles : '—')+'</td><td>'+(r.anomaly_mse !== undefined ? r.anomaly_mse : '—')+'</td><td title="'+(r.maintenance_recommendation||'').replace(/"/g,'&quot;')+'">'+(r.maintenance_recommendation||'—')+'</td></tr>';
     });
     html+='</tbody></table>';
     area.innerHTML='<div class="fade-in">'+html+'</div>';
