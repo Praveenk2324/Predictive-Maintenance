@@ -71,6 +71,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 class EnginePayload(BaseModel):
     engine_id: int
     rf_features: list[float]
