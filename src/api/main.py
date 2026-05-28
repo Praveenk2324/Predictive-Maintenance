@@ -16,6 +16,7 @@ from src.api import models
 
 # --- Global Model Variables ---
 ml_models = {}
+# mlflow.set_tracking_uri("http://mlflow:5000")
 MLFLOW_URI = "http://mlflow:5000"
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 ANOMALY_THRESHOLD = 0.253008

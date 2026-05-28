@@ -222,7 +222,7 @@ async function runDiagnostics(){
 
   try{
     const payload=buildPayload(engineId,cycle);
-    const res=await fetch(API_BASE+'/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const res=await fetch(API_BASE+'/predict/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     if(!res.ok) throw new Error('API returned '+res.status+': '+(await res.text()));
     const data=await res.json();
     displayResults(data,cycle);
