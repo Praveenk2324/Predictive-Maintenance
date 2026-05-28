@@ -236,7 +236,7 @@ async function runDiagnostics(){
   }
 }
 
-function displayResults(d,cycle){
+function displayResults(d, cycle) {
   document.getElementById('placeholder').style.display='none';
   const panel=document.getElementById('resultsPanel');
   panel.classList.remove('results-hidden');
@@ -244,36 +244,81 @@ function displayResults(d,cycle){
   void panel.offsetWidth;
   panel.classList.add('fade-in');
 
+  // --- MAPPED TO PYTHON API KEYS ---
+  const statusText = d.is_anomaly || 'NORMAL';
+  const isCritical = statusText.includes('ANOMALY') || statusText.includes('CRITICAL');
+  
   const badge=document.getElementById('statusBadge');
-  const isCritical=d.status.includes('CRITICAL');
-  badge.textContent=d.status;
-  badge.className='status-badge '+(isCritical?'status-critical':'status-healthy');
+  badge.textContent = statusText;
+  badge.className = 'status-badge ' + (isCritical ? 'status-critical' : 'status-healthy');
 
-  document.getElementById('rulValue').textContent=d.predicted_rul_cycles;
-  document.getElementById('mseValue').textContent=d.anomaly_mse;
-  document.getElementById('thresholdInfo').innerHTML='⚠ Threshold: '+d.anomaly_threshold;
+  document.getElementById('rulValue').textContent = d.predicted_rul ? d.predicted_rul.toFixed(1) : '—';
+  document.getElementById('mseValue').textContent = d.reconstruction_mse ? d.reconstruction_mse.toFixed(0) : '—';
+  document.getElementById('thresholdInfo').innerHTML = '⚠ Threshold: Auto-calculated';
 
-  // Gauge
-  const maxGauge=Math.max(d.anomaly_mse, d.anomaly_threshold)*1.5;
-  const fillPct=Math.min((d.anomaly_mse/maxGauge)*100,100);
-  const threshPct=(d.anomaly_threshold/maxGauge)*100;
+  // Gauge Logic
+  const mse = d.reconstruction_mse || 0;
+  const thresh = 150000; // Static visual threshold
+  const maxGauge = Math.max(mse, thresh) * 1.5;
+  const fillPct = Math.min((mse / maxGauge) * 100, 100);
+  const threshPct = (thresh / maxGauge) * 100;
+  
   const fill=document.getElementById('gaugeFill');
   fill.style.width=fillPct+'%';
   fill.style.background=isCritical?'linear-gradient(90deg,var(--red-dim),var(--red))':'linear-gradient(90deg,#006644,var(--green))';
+  
   const th=document.getElementById('gaugeThreshold');
   th.style.left=threshPct+'%';
 
-  // Recommendation
+  // Recommendation Box
   const rec=document.getElementById('recBox');
   const recText=document.getElementById('recText');
   if(isCritical){
     rec.className='rec-box rec-warning';
     rec.querySelector('.icon').textContent='🔧';
-    recText.textContent=d.maintenance_recommendation;
-  }else{
+    recText.textContent = d.rag_diagnostics || 'Anomaly detected. Inspect engine.';
+  } else {
     rec.className='rec-box rec-info';
     rec.querySelector('.icon').textContent='📝';
-    recText.textContent=d.maintenance_recommendation||'System operating within normal parameters.';
+    recText.textContent = d.rag_diagnostics || 'System operating within normal parameters.';
+  }
+}
+
+async function fetchHistory(){
+  const btn=document.getElementById('btnFetch');
+  const area=document.getElementById('historyArea');
+  const engineId=document.getElementById('engineSelect').value;
+  btn.disabled=true; btn.textContent='Querying...';
+  area.innerHTML='';
+
+  try{
+    const res=await fetch(API_BASE+'/history/'+engineId);
+    if(res.status===404){
+      area.innerHTML='<div class="info-banner">No logs found for Engine '+engineId+'. Run diagnostics first to generate logs.</div>';
+      return;
+    }
+    if(!res.ok) throw new Error('API returned '+res.status);
+    const data=await res.json();
+    if(!data.length){area.innerHTML='<div class="info-banner">No logs found for Engine '+engineId+'.</div>';return;}
+
+    let html='<table><thead><tr><th>ID</th><th>Timestamp</th><th>Status</th><th>RUL</th><th>MSE</th><th>Recommendation</th></tr></thead><tbody>';
+    data.forEach(r=>{
+      // --- MAPPED TO PYTHON API KEYS ---
+      const statusText = r.is_anomaly || 'NORMAL';
+      const cls = statusText.includes('ANOMALY') || statusText.includes('CRITICAL') ? 'cell-critical' : 'cell-healthy';
+      const ts = r.timestamp ? new Date(r.timestamp).toLocaleString() : '—';
+      const rul = r.predicted_rul ? parseFloat(r.predicted_rul).toFixed(1) : '—';
+      const mse = r.reconstruction_mse ? parseFloat(r.reconstruction_mse).toFixed(0) : '—';
+      const rec = r.rag_diagnostics || '—';
+      
+      html+='<tr><td>'+(r.id || r.prediction_id || '—')+'</td><td>'+ts+'</td><td class="'+cls+'">'+statusText+'</td><td>'+rul+'</td><td>'+mse+'</td><td title="'+rec.replace(/"/g,'&quot;')+'">'+rec+'</td></tr>';
+    });
+    html+='</tbody></table>';
+    area.innerHTML='<div class="fade-in">'+html+'</div>';
+  }catch(e){
+    showError('historyArea',e.message);
+  }finally{
+    btn.disabled=false; btn.textContent='Fetch Historical Logs';
   }
 }
 
