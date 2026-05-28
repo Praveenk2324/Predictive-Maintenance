@@ -52,7 +52,7 @@ async def lifespan(app: FastAPI):
     print("Connecting to ChromaDB Vector Space...")
     chroma_client = chromadb.PersistentClient(path="chroma_db")
     sentence_transformer_ef = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
-    ml_models['rag'] = chroma_client.get_collection(name="maintenance_knowledge_base", embedding_function=sentence_transformer_ef)
+    ml_models['rag'] = chroma_client.get_or_create_collection(name="maintenance_knowledge_base", embedding_function=sentence_transformer_ef)
 
     print("--- API SUCCESSFULLY INITIALIZED ---")
     yield
