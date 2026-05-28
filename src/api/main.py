@@ -36,8 +36,9 @@ async def lifespan(app: FastAPI):
     alias = "production"
 
     prod_lstm_version = client.get_model_version_by_alias(lstm_name, alias)
-    scaler_path = client.download_artifacts(prod_lstm_version.run_id, 'sensor_scaler.pkl')
-    ml_models['scaler'] = joblib.load(scaler_path)
+    # scaler_path = client.download_artifacts(prod_lstm_version.run_id, 'sensor_scaler.pkl')
+    # ml_models['scaler'] = joblib.load(scaler_path)
+    ml_models['scaler'] = joblib.load('sensor_scaler.pkl')
 
     lstm_model = mlflow.pytorch.load_model(f"models:/{lstm_name}@{alias}")
     lstm_model.to(DEVICE)
