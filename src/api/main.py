@@ -27,6 +27,7 @@ async def lifespan(app: FastAPI):
     This function runs exactly once when the server starts.
     It loads all machine learning models into memory using modern MLflow Aliases.
     """
+    models.Base.metadata.create_all(bind=engine)
     print(f"Starting API... Assigning tensors to: {DEVICE}")
     mlflow.set_tracking_uri(MLFLOW_URI)
     client = MlflowClient()
