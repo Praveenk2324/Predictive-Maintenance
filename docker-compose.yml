@@ -1,29 +1,22 @@
 services:
   api:
-    build: 
-      context: .
-      dockerfile: Dockerfile
+    build: .
     container_name: pm_api
     ports:
       - "8000:8000"
+    # FIX 1: depends_on now uses condition: service_healthy.
+    # The API container will NOT start until postgres and mlflow pass their
+    # health checks. Previously this only waited for containers to START,
+    # not for postgres to accept connections or mlflow to finish pip install.
     depends_on:
-      - postgres
-      - mlflow
+      postgres:
+        condition: service_healthy
+      mlflow:
+        condition: service_healthy
     volumes:
       - ./chroma_db:/app/chroma_db
     environment:
       - DB_HOST=postgres
-    restart: unless-stopped
-
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
-    container_name: pm_frontend
-    ports:
-      - "8501:8501"
-    depends_on:
-      - api
     restart: unless-stopped
 
   postgres:
@@ -38,6 +31,13 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
+    # FIX 1: Health check — pg_isready confirms postgres is accepting connections.
+    # The api service will wait until this passes before starting.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d maintenance_logs"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   mlflow:
     image: python:3.12-slim
@@ -52,6 +52,15 @@ services:
     working_dir: /app
     command: sh -c "pip install mlflow && mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlruns --host 0.0.0.0 --port 5000 --allowed-hosts '*'"
     restart: unless-stopped
+    # FIX 1: Health check — curl confirms the mlflow HTTP server is up.
+    # start_period: 180s gives pip install time to complete before retries begin.
+    # Without this the API starts while pip is still running and crashes immediately.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:5000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 180s
 
 volumes:
   pgdata:
